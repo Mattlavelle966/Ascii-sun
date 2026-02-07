@@ -66,11 +66,11 @@ function markPoints(points, char ) {
     };
 }
 
-function ringNoiseGenerator(points, char) {
+function ringNoiseGenerator(points, char, noiseRange) {
     for (const point of points) {
         let col = point.col;
         let row = point.row;
-        let random = col + Math.floor(Math.random() * 10);
+        let random = col + Math.floor(Math.random() * noiseRange);
         for (let t = col; t < random; t++) {
             matrix[row][t] = char;
 
@@ -89,18 +89,20 @@ function forwardEdgeNoiseGenerator(points, char) {
         }
     }
 }
-function spiralNoiseGenerator(points, char) {
+function spiralNoiseGenerator(points, char,noiseRange1,noiseRange2) {
     for (const point of points) {
         let col = point.col;
         let row = point.row;
-        let random = col + Math.floor(Math.random() * 8);
-        let counter = 1;
+        let random = col + Math.floor(Math.random() * noiseRange1);
+        let vertCounter = 0, horzCounter = 0;
+        
         for (let t = col; t < random; t++) {
-            counter+=2;
-            let random = 4 + Math.floor(Math.random() * 5);
-            if (row+counter >= ROWS) break;
-            if (t+counter*random >= COLS) break;
-            matrix[row+counter][t+counter*random] = char;
+            vertCounter+=5;
+            horzCounter+=1;
+            let random = Math.floor(Math.random() * noiseRange2);
+            if (row+horzCounter >= ROWS) break;
+            if (t+vertCounter*random >= COLS) break;
+            matrix[row+horzCounter][t+vertCounter*random] = char;
         }
     }
 }
@@ -113,13 +115,13 @@ function getRandomChar(keys) {
 
 
 
-const points = getCirclePoints(ROWS, COLS, 10, { fill: false });
+const points = getCirclePoints(ROWS, COLS, 20, { fill: false });
 const points2 = getCirclePoints(ROWS, COLS-5, 10, { fill: false });
 initMatrix();
-markPoints(points, "-");
+markPoints(points, "*");
 process.stdout.write('\x1b[2J'); // clear screen
 process.stdout.write('\x1b[H');   // move to 0,0
-let maxTime = 200;
+let maxTime = 500;
 let time = 0;
 for (let i = 0; i < matrix.length; i++) {
     const centerCol = Math.floor(COLS / 2);
@@ -127,15 +129,18 @@ for (let i = 0; i < matrix.length; i++) {
     // Only left half of circle
     const leftOnly = points.filter(point => point.col < centerCol)
     const rightOnly = points.filter(point => point.col > centerCol);
-    ringNoiseGenerator(rightOnly, "-");
-    spiralNoiseGenerator(points, "-");
-    ringNoiseGenerator(leftOnly, "-");
-    markPoints(points, "-");
-    forwardEdgeNoiseGenerator(leftOnly, "-");
+    ringNoiseGenerator(rightOnly, "*",10);
+
+    ringNoiseGenerator(leftOnly, "*",15);
+    markPoints(points, "*");
+    forwardEdgeNoiseGenerator(leftOnly, "*");
 
     if (i % 2 === 0){
+
+        spiralNoiseGenerator(points, "*",Math.floor(Math.random() * i),Math.floor(Math.random() * i));
         console.log(chalk.bgGray(chalk.green(matrix[i].join(''))));
     }else{
+        spiralNoiseGenerator(rightOnly, "*",Math.floor(Math.random() * i),Math.floor(Math.random() * i));
         console.log(chalk.bgGray(chalk.red(matrix[i].join(''))));
     }
     initMatrix();
